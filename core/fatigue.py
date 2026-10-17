@@ -6,7 +6,7 @@ import config
 class FatigueDetector:
     def __init__(self):
         self.mulai = time.time()
-        self.waktu_kedip = deque() 
+        self.waktu_kedip = deque()  
         self.jumlah_kedip_lalu = 0
         self.mulai_tertutup = None
         self.kedip_per_menit = 0.0
@@ -34,7 +34,6 @@ class FatigueDetector:
         if lama_data > 0:
             self.kedip_per_menit = len(self.waktu_kedip) * 60 / lama_data
 
-        # Tentukan status
         if lama_tertutup > config.DURASI_MENGANTUK:
             self.status = "Mengantuk"
         elif sekarang - self.mulai < config.DURASI_DATA_FATIGUE:

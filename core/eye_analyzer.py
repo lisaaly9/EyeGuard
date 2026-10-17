@@ -25,7 +25,6 @@ class EyeAnalyzer:
         if self.tertutup:
             self.frame_tertutup += 1
         else:
-            # Mata baru saja terbuka: cek apakah tadi tertutup cukup lama
             if config.FRAME_MIN_KEDIP <= self.frame_tertutup <= config.FRAME_MAX_KEDIP:
                 self.jumlah_kedip += 1
             self.frame_tertutup = 0

@@ -4,7 +4,7 @@ import config
 
 class DistanceEstimator:
     def __init__(self):
-        self.lebar_patokan = None  
+        self.lebar_patokan = None 
         self.lebar_sekarang = 0.0
         self.rasio = 0.0
 

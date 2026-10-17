@@ -5,9 +5,9 @@ import config
 
 class ScreenLocker:
     def __init__(self):
-        self.aktif = False       
+        self.aktif = False          
         self.mulai_dekat = None    
-        self.terakhir_kunci = 0.0 
+        self.terakhir_kunci = 0.0    
         self.sisa = None          
 
     def ubah_aktif(self):
