@@ -6,6 +6,8 @@ serta mengunci layar saat pengguna, misalnya anak yang sedang bermain,
 duduk terlalu dekat dengan layar.
 
 # Video Presentasi
+[![Video presentasi EyeGuard](https://img.youtube.com/vi/mNdickXQzMc/hqdefault.jpg)](https://www.youtube.com/watch?v=mNdickXQzMc)
+
 [Tonton video presentasi EyeGuard di YouTube](https://www.youtube.com/watch?v=mNdickXQzMc)
 
 > Indikator kelelahan mata, bukan alat diagnosis medis.
