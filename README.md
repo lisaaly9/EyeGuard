@@ -5,6 +5,9 @@ menggunakan webcam. EyeGuard berjalan di latar belakang dan memberi peringatan
 serta mengunci layar saat pengguna, misalnya anak yang sedang bermain,
 duduk terlalu dekat dengan layar.
 
+# Video Presentasi
+[Tonton video presentasi EyeGuard di YouTube](https://www.youtube.com/watch?v=mNdickXQzMc)
+
 > Indikator kelelahan mata, bukan alat diagnosis medis.
 
 ## Fitur yang sudah berfungsi
