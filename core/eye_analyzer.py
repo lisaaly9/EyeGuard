@@ -15,13 +15,23 @@ class EyeAnalyzer:
         self.tertutup = False
         self.jumlah_kedip = 0
         self.frame_tertutup = 0
+        self._ear_lalu = None
 
     def analisis(self, titik, mata_kiri, mata_kanan):
         ear_kiri = hitung_ear(titik, mata_kiri)
         ear_kanan = hitung_ear(titik, mata_kanan)
+        ear_baru = (ear_kiri + ear_kanan) / 2
+        ear_min = min(ear_kiri, ear_kanan)
         self.ear = (ear_kiri + ear_kanan) / 2
-        self.tertutup = self.ear < config.AMBANG_EAR
-
+        self.tertutup = min(ear_kiri, ear_kanan) < config.AMBANG_EAR
+        
+        if self._ear_lalu is not None and abs(ear_baru - self._ear_lalu) > 0.18:
+            ear_baru = (ear_baru + self._ear_lalu) / 2
+            ear_min = min(ear_min, ear_baru)
+        self._ear_lalu = ear_baru
+        self.ear = ear_baru
+        self.tertutup = ear_min < config.AMBANG_EAR
+            
         if self.tertutup:
             self.frame_tertutup += 1
         else:
@@ -31,3 +41,4 @@ class EyeAnalyzer:
 
     def reset_frame(self):
         self.frame_tertutup = 0
+        self._ear_lalu = None
