@@ -8,7 +8,6 @@ def hitung_ear(titik, indeks):
     lebar = 2 * math.dist(p1, p4)
     return tinggi / lebar
 
-
 class EyeAnalyzer:
     def __init__(self):
         self.ear = 0.0

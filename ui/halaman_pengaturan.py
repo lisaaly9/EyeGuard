@@ -1,11 +1,7 @@
-"""Halaman Pengaturan: threshold monitoring (FR-22)."""
 import customtkinter as ctk
-
 from data import database
-from ui.tema import (BIRU, BIRU_GELAP, HIJAU, MERAH, TEKS, TEKS_PUDAR,
-                     buat_font, buat_kartu, tombol_biru, tombol_garis)
+from ui.tema import (BIRU, BIRU_GELAP, HIJAU, MERAH, TEKS, TEKS_PUDAR, buat_font, buat_kartu, tombol_biru, tombol_garis)
 
-# (nama di config, judul, keterangan, langkah slider, format tampilan)
 PENGATURAN = [
     ("AMBANG_EAR", "Ambang EAR",
      "Di bawah angka ini mata dianggap tertutup", 0.01, "{:.2f}"),
@@ -18,7 +14,6 @@ PENGATURAN = [
     ("DURASI_MENGANTUK", "Durasi mata tertutup",
      "Mata tertutup lebih lama dari ini dianggap mengantuk", 0.1, "{:.1f} dtk"),
 ]
-
 
 class HalamanPengaturan(ctk.CTkScrollableFrame):
     def __init__(self, master, monitor):
@@ -39,15 +34,12 @@ class HalamanPengaturan(ctk.CTkScrollableFrame):
         return k
 
     def _buat(self):
-        ctk.CTkLabel(self, text="Pengaturan", font=self.f_judul, text_color=TEKS
-                     ).pack(anchor="w", padx=24, pady=(20, 0))
-        ctk.CTkLabel(self, text="Perubahan langsung berlaku, tanpa perlu menjalankan ulang aplikasi.",
-                     font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=24, pady=(0, 10))
+        ctk.CTkLabel(self, text="Pengaturan", font=self.f_judul, text_color=TEKS).pack(anchor="w", padx=24, pady=(20, 0))
+        ctk.CTkLabel(self, text="Perubahan langsung berlaku, tanpa perlu menjalankan ulang aplikasi.", font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=24, pady=(0, 10))
 
-        # --- threshold ---
+        # threshold
         kartu = self._kartu()
-        ctk.CTkLabel(kartu, text="Threshold monitoring", font=self.f_tebal, text_color=TEKS
-                     ).pack(anchor="w", padx=18, pady=(14, 2))
+        ctk.CTkLabel(kartu, text="Threshold monitoring", font=self.f_tebal, text_color=TEKS).pack(anchor="w", padx=18, pady=(14, 2))
 
         for nama, judul, ket, langkah, fmt in PENGATURAN:
             minimum, maksimum, _ = database.BATAS[nama]
@@ -62,9 +54,7 @@ class HalamanPengaturan(ctk.CTkScrollableFrame):
             self.nilai_label[nama] = nilai
             ctk.CTkLabel(baris, text=ket, font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w")
             jumlah_langkah = max(1, round((maksimum - minimum) / langkah))
-            s = ctk.CTkSlider(baris, from_=minimum, to=maksimum, number_of_steps=jumlah_langkah,
-                              progress_color=BIRU, button_color=BIRU, button_hover_color=BIRU_GELAP,
-                              command=lambda v, n=nama: self._geser(n, v))
+            s = ctk.CTkSlider(baris, from_=minimum, to=maksimum, number_of_steps=jumlah_langkah, progress_color=BIRU, button_color=BIRU, button_hover_color=BIRU_GELAP, command=lambda v, n=nama: self._geser(n, v))
             s.pack(fill="x", pady=(6, 0))
             self.slider[nama] = s
 
@@ -72,23 +62,19 @@ class HalamanPengaturan(ctk.CTkScrollableFrame):
         tombol.pack(fill="x", padx=18, pady=(10, 4))
         tombol_biru(tombol, "Simpan", self._simpan).pack(side="left")
         tombol_garis(tombol, "Kembalikan default", self._reset).pack(side="left", padx=10)
-        self.lbl_pesan = ctk.CTkLabel(kartu, text="", font=self.f_kecil, text_color=TEKS_PUDAR,
-                                      anchor="w")
+        self.lbl_pesan = ctk.CTkLabel(kartu, text="", font=self.f_kecil, text_color=TEKS_PUDAR, anchor="w")
         self.lbl_pesan.pack(anchor="w", padx=18, pady=(4, 14))
 
-        # --- kalibrasi ---
+        # kalibrasi
         k2 = self._kartu()
-        ctk.CTkLabel(k2, text="Kalibrasi jarak", font=self.f_tebal, text_color=TEKS
-                     ).pack(anchor="w", padx=18, pady=(14, 2))
-        ctk.CTkLabel(k2, text="Duduk di jarak yang nyaman dan hadap layar, lalu tekan tombol di bawah.",
-                     font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=18)
+        ctk.CTkLabel(k2, text="Kalibrasi jarak", font=self.f_tebal, text_color=TEKS).pack(anchor="w", padx=18, pady=(14, 2))
+        ctk.CTkLabel(k2, text="Duduk di jarak yang nyaman dan hadap layar, lalu tekan tombol di bawah.", font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=18)
         tombol_biru(k2, "Kalibrasi ulang jarak", self._kalibrasi).pack(anchor="w", padx=18, pady=(10, 4))
         self.lbl_kal = ctk.CTkLabel(k2, text="", font=self.f_kecil, text_color=TEKS_PUDAR)
         self.lbl_kal.pack(anchor="w", padx=18, pady=(0, 14))
 
-    # --- aksi ---
+    # aksi
     def segarkan(self):
-        """Dipanggil tiap halaman ini dibuka: tampilkan nilai yang sedang berlaku."""
         for nama, nilai in database.ambil_threshold().items():
             self.slider[nama].set(nilai)
             self._geser(nama, nilai)
@@ -103,10 +89,8 @@ class HalamanPengaturan(ctk.CTkScrollableFrame):
         self._toast_tampil(teks, warna)
 
     def _toast_tampil(self, teks, warna):
-        """Pop-up kecil di atas halaman, hilang sendiri setelah 3 detik."""
         if self._toast is None:
-            self._toast = ctk.CTkLabel(self._induk, text="", font=self.f_tebal,
-                                       text_color="white", corner_radius=12, height=44)
+            self._toast = ctk.CTkLabel(self._induk, text="", font=self.f_tebal, text_color="white", corner_radius=12, height=44)
         if self._toast_job is not None:
             self.after_cancel(self._toast_job)
         self._toast.configure(text=f"   {teks}   ", fg_color=warna)
@@ -140,8 +124,6 @@ class HalamanPengaturan(ctk.CTkScrollableFrame):
     def _kalibrasi(self):
         if self.monitor.ambil_data()["berjalan"]:
             self.monitor.kalibrasi()
-            self.lbl_kal.configure(text="Kalibrasi diminta. Tetap duduk normal selama beberapa detik.",
-                                   text_color=BIRU)
+            self.lbl_kal.configure(text="Kalibrasi diminta. Tetap duduk normal selama beberapa detik.", text_color=BIRU)
         else:
-            self.lbl_kal.configure(text="Monitoring belum berjalan. Mulai monitoring dulu.",
-                                   text_color=MERAH)
+            self.lbl_kal.configure(text="Monitoring belum berjalan. Mulai monitoring dulu.", text_color=MERAH)

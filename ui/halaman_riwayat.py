@@ -1,19 +1,11 @@
-"""Halaman Riwayat: statistik, grafik, dan tabel sesi monitoring."""
 import tkinter as tk
-
 import customtkinter as ctk
-
 import config
 from data import database
-from ui.tema import (BIRU, BIRU_MUDA, GARIS, MERAH, NAMA_FATIGUE, TEKS, TEKS_PUDAR,
-                     WARNA_FATIGUE, buat_font, buat_kartu, format_durasi, format_waktu)
+from ui.tema import (BIRU, BIRU_MUDA, GARIS, MERAH, NAMA_FATIGUE, TEKS, TEKS_PUDAR, WARNA_FATIGUE, buat_font, buat_kartu, format_durasi, format_waktu)
 
 LEBAR_GRAFIK, TINGGI_GRAFIK = 640, 180
-
-# (judul kolom, bobot lebar)
-KOLOM = [("Waktu mulai", 3), ("Durasi", 2), ("Kedip/menit", 2),
-         ("Terlalu dekat", 2), ("Fatigue", 2), ("", 1)]
-
+KOLOM = [("Waktu mulai", 3), ("Durasi", 2), ("Kedip/menit", 2), ("Terlalu dekat", 2), ("Fatigue", 2), ("", 1)]
 
 class HalamanRiwayat(ctk.CTkScrollableFrame):
     def __init__(self, master):
@@ -23,61 +15,49 @@ class HalamanRiwayat(ctk.CTkScrollableFrame):
         self._buat()
 
     def _buat(self):
-        ctk.CTkLabel(self, text="Riwayat Monitoring", font=self.f_judul,
-                     text_color=TEKS).pack(anchor="w", padx=24, pady=(20, 0))
-        ctk.CTkLabel(self, text="Ringkasan semua sesi monitoring yang tersimpan di komputer ini.",
-                     font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=24, pady=(0, 10))
+        ctk.CTkLabel(self, text="Riwayat Monitoring", font=self.f_judul, text_color=TEKS).pack(anchor="w", padx=24, pady=(20, 0))
+        ctk.CTkLabel(self, text="Ringkasan semua sesi monitoring yang tersimpan di komputer ini.", font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=24, pady=(0, 10))
 
-        # --- 4 kartu statistik ---
+        # ringkasan
         baris = ctk.CTkFrame(self, fg_color="transparent")
         baris.pack(fill="x", padx=18, pady=6)
-        daftar = [("sesi", "Total sesi"), ("waktu", "Total waktu"),
-                  ("kedip", "Rata-rata kedip per menit"), ("dekat", "Kali terlalu dekat")]
+        daftar = [("sesi", "Total sesi"), ("waktu", "Total waktu"),("kedip", "Rata-rata kedip per menit"), ("dekat", "Kali terlalu dekat")]
         for i, (kunci, judul) in enumerate(daftar):
             baris.grid_columnconfigure(i, weight=1, uniform="stat")
             k = buat_kartu(baris)
             k.grid(row=0, column=i, padx=6, sticky="nsew")
-            ctk.CTkLabel(k, text=judul, font=self.f_kecil, text_color=TEKS_PUDAR
-                         ).pack(anchor="w", padx=18, pady=(14, 0))
+            ctk.CTkLabel(k, text=judul, font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=18, pady=(14, 0))
             nilai = ctk.CTkLabel(k, text="-", font=self.f_besar, text_color=TEKS)
             nilai.pack(anchor="w", padx=18, pady=(0, 14))
             self.stat[kunci] = nilai
 
-        # --- grafik ---
+        # grafik
         g = buat_kartu(self)
         g.pack(fill="x", padx=24, pady=8)
-        ctk.CTkLabel(g, text="Kedip per menit tiap sesi", font=self.f_tebal, text_color=TEKS
-                     ).pack(anchor="w", padx=18, pady=(14, 0))
-        ctk.CTkLabel(g, text="10 sesi terakhir, garis putus = batas minimum",
-                     font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=18, pady=(0, 8))
-        self.canvas = tk.Canvas(g, width=LEBAR_GRAFIK, height=TINGGI_GRAFIK,
-                                bg="white", highlightthickness=0)
+        ctk.CTkLabel(g, text="Kedip per menit tiap sesi", font=self.f_tebal, text_color=TEKS).pack(anchor="w", padx=18, pady=(14, 0))
+        ctk.CTkLabel(g, text="10 sesi terakhir, garis putus = batas minimum",font=self.f_kecil, text_color=TEKS_PUDAR).pack(anchor="w", padx=18, pady=(0, 8))
+        self.canvas = tk.Canvas(g, width=LEBAR_GRAFIK, height=TINGGI_GRAFIK, bg="white", highlightthickness=0)
         self.canvas.pack(anchor="w", padx=18, pady=(0, 14))
 
-        # --- tabel sesi ---
+        # tabel riwayat
         t = buat_kartu(self)
         t.pack(fill="x", padx=24, pady=8)
-        ctk.CTkLabel(t, text="Sesi terakhir", font=self.f_tebal, text_color=TEKS
-                     ).pack(anchor="w", padx=18, pady=(14, 6))
+        ctk.CTkLabel(t, text="Sesi terakhir", font=self.f_tebal, text_color=TEKS).pack(anchor="w", padx=18, pady=(14, 6))
         self.tabel = ctk.CTkFrame(t, fg_color="transparent")
         self.tabel.pack(fill="x", padx=18, pady=(0, 14))
 
-        # --- detail peringatan ---
+        # detail peringatan
         d = buat_kartu(self)
         d.pack(fill="x", padx=24, pady=8)
-        self.lbl_detail_judul = ctk.CTkLabel(d, text="Peringatan sesi", font=self.f_tebal,
-                                             text_color=TEKS)
+        self.lbl_detail_judul = ctk.CTkLabel(d, text="Peringatan sesi", font=self.f_tebal, text_color=TEKS)
         self.lbl_detail_judul.pack(anchor="w", padx=18, pady=(14, 6))
-        self.lbl_detail = ctk.CTkLabel(d, text="", font=self.f_kecil, text_color=TEKS,
-                                       justify="left", anchor="w", wraplength=760)
+        self.lbl_detail = ctk.CTkLabel(d, text="", font=self.f_kecil, text_color=TEKS, justify="left", anchor="w", wraplength=760)
         self.lbl_detail.pack(anchor="w", padx=18, pady=(0, 14))
 
-        ctk.CTkLabel(self, text="EyeGuard · indikator kelelahan mata, bukan diagnosis medis",
-                     font=self.f_kecil, text_color=TEKS_PUDAR).pack(pady=(8, 16))
+        ctk.CTkLabel(self, text="EyeGuard · indikator kelelahan mata, bukan diagnosis medis", font=self.f_kecil, text_color=TEKS_PUDAR).pack(pady=(8, 16))
 
-    # --- isi data ---
+    # aksi
     def segarkan(self):
-        """Dipanggil tiap halaman ini dibuka."""
         try:
             total = database.ringkasan_total()
             riwayat = database.ambil_riwayat(20)
@@ -99,8 +79,7 @@ class HalamanRiwayat(ctk.CTkScrollableFrame):
         self.canvas.delete("all")
         for w in self.tabel.winfo_children():
             w.destroy()
-        ctk.CTkLabel(self.tabel, text="Data riwayat tidak dapat dimuat. Coba buka halaman ini lagi.",
-                     font=self.f_kecil, text_color=MERAH).pack(anchor="w", pady=8)
+        ctk.CTkLabel(self.tabel, text="Data riwayat tidak dapat dimuat. Coba buka halaman ini lagi.", font=self.f_kecil, text_color=MERAH).pack(anchor="w", pady=8)
 
     def _isi_tabel(self, riwayat):
         for w in self.tabel.winfo_children():
@@ -108,28 +87,19 @@ class HalamanRiwayat(ctk.CTkScrollableFrame):
         for i, (_, bobot) in enumerate(KOLOM):
             self.tabel.grid_columnconfigure(i, weight=bobot, uniform="kol")
         for i, (judul, _) in enumerate(KOLOM):
-            ctk.CTkLabel(self.tabel, text=judul, font=self.f_kecil, text_color=TEKS_PUDAR,
-                         anchor="w").grid(row=0, column=i, sticky="w", pady=(0, 6))
+            ctk.CTkLabel(self.tabel, text=judul, font=self.f_kecil, text_color=TEKS_PUDAR, anchor="w").grid(row=0, column=i, sticky="w", pady=(0, 6))
 
         if not riwayat:
-            ctk.CTkLabel(self.tabel, text="Belum ada riwayat. Mulai monitoring pertamamu.",
-                         font=self.f_kecil, text_color=TEKS_PUDAR
-                         ).grid(row=1, column=0, columnspan=len(KOLOM), sticky="w", pady=10)
+            ctk.CTkLabel(self.tabel, text="Belum ada riwayat. Mulai monitoring pertamamu.", font=self.f_kecil, text_color=TEKS_PUDAR ).grid(row=1, column=0, columnspan=len(KOLOM), sticky="w", pady=10)
             return
 
         for n, s in enumerate(riwayat, start=1):
             status = s["status_fatigue"] or "-"
-            sel = [format_waktu(s["waktu_mulai"]), format_durasi(s["durasi_detik"]),
-                   f"{s['kedip_per_menit']:.0f}", str(s["kali_terlalu_dekat"]),
-                   NAMA_FATIGUE.get(status, status)]
+            sel = [format_waktu(s["waktu_mulai"]), format_durasi(s["durasi_detik"]),f"{s['kedip_per_menit']:.0f}", str(s["kali_terlalu_dekat"]),NAMA_FATIGUE.get(status, status)]
             for i, teks in enumerate(sel):
                 warna = WARNA_FATIGUE.get(status, TEKS) if i == 4 else TEKS
-                ctk.CTkLabel(self.tabel, text=teks, font=self.f_kecil, text_color=warna,
-                             anchor="w").grid(row=n, column=i, sticky="w", pady=4)
-            ctk.CTkButton(self.tabel, text="Lihat", width=56, height=28, corner_radius=8,
-                          fg_color=BIRU_MUDA, text_color=BIRU, hover_color="#D3E2FF",
-                          command=lambda x=s: self._tampil_detail(x)
-                          ).grid(row=n, column=5, sticky="e", pady=4)
+                ctk.CTkLabel(self.tabel, text=teks, font=self.f_kecil, text_color=warna,anchor="w").grid(row=n, column=i, sticky="w", pady=4)
+            ctk.CTkButton(self.tabel, text="Lihat", width=56, height=28, corner_radius=8,fg_color=BIRU_MUDA, text_color=BIRU, hover_color="#D3E2FF",command=lambda x=s: self._tampil_detail(x)).grid(row=n, column=5, sticky="e", pady=4)
 
     def _tampil_detail(self, sesi):
         if sesi is None:
@@ -150,8 +120,7 @@ class HalamanRiwayat(ctk.CTkScrollableFrame):
         c.delete("all")
         w, h = LEBAR_GRAFIK, TINGGI_GRAFIK
         if not sesi:
-            c.create_text(w / 2, h / 2, text="Belum ada data untuk ditampilkan",
-                          fill=TEKS_PUDAR, font=("Segoe UI", 11))
+            c.create_text(w / 2, h / 2, text="Belum ada data untuk ditampilkan",fill=TEKS_PUDAR, font=("Segoe UI", 11))
             return
 
         kiri, bawah, atas = 10, 26, 18
@@ -171,9 +140,6 @@ class HalamanRiwayat(ctk.CTkScrollableFrame):
         for i, s in enumerate(sesi):
             tengah = kiri + langkah * (i + 0.5)
             v = s["kedip_per_menit"]
-            c.create_rectangle(tengah - lebar_bar / 2, y(v), tengah + lebar_bar / 2,
-                               h - bawah, fill=BIRU, outline="")
-            c.create_text(tengah, y(v) - 9, text=f"{v:.0f}", fill=TEKS,
-                          font=("Segoe UI", 10, "bold"))
-            c.create_text(tengah, h - bawah + 12, text=format_waktu(s["waktu_mulai"])[:5],
-                          fill=TEKS_PUDAR, font=("Segoe UI", 9))
+            c.create_rectangle(tengah - lebar_bar / 2, y(v), tengah + lebar_bar / 2, h - bawah, fill=BIRU, outline="")
+            c.create_text(tengah, y(v) - 9, text=f"{v:.0f}", fill=TEKS, font=("Segoe UI", 10, "bold"))
+            c.create_text(tengah, h - bawah + 12, text=format_waktu(s["waktu_mulai"])[:5], fill=TEKS_PUDAR, font=("Segoe UI", 9))

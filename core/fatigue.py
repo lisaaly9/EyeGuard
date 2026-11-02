@@ -2,7 +2,6 @@ import time
 from collections import deque
 import config
 
-
 class FatigueDetector:
     def __init__(self):
         self.mulai = time.time()

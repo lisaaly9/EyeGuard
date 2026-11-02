@@ -1,11 +1,8 @@
-"""Panel login/registrasi yang muncul sebagai overlay di dalam jendela Dashboard
-(bukan jendela terpisah), supaya terasa menyatu seperti aplikasi mobile."""
 import customtkinter as ctk
-
 from data import database
 from ui.tema import BIRU, GARIS, MERAH, TEKS, TEKS_PUDAR, buat_kartu, tombol_biru
 
-SCRIM = "#0B1B3F"   # warna latar belakang redup di belakang kartu
+SCRIM = "#0B1B3F"
 
 
 class PanelLogin(ctk.CTkFrame):
@@ -27,8 +24,7 @@ class PanelLogin(ctk.CTkFrame):
 
         self.lbl_judul = ctk.CTkLabel(kartu, text="Masuk ke EyeGuard", font=f_judul, text_color=TEKS)
         self.lbl_judul.pack(pady=(28, 4), padx=60)
-        ctk.CTkLabel(kartu, text="Masuk dulu sebelum mulai monitoring.",
-                     font=f_kecil, text_color=TEKS_PUDAR).pack(pady=(0, 16))
+        ctk.CTkLabel(kartu, text="Masuk dulu sebelum mulai monitoring.", font=f_kecil, text_color=TEKS_PUDAR).pack(pady=(0, 16))
 
         self.entri_nama = ctk.CTkEntry(kartu, placeholder_text="Nama lengkap", height=38, width=260)
         self.entri_email = ctk.CTkEntry(kartu, placeholder_text="Email", height=38, width=260)
@@ -42,19 +38,15 @@ class PanelLogin(ctk.CTkFrame):
         self.btn_aksi = tombol_biru(kartu, "Masuk", self._submit)
         self.btn_aksi.pack(fill="x", padx=24, pady=(14, 6))
 
-        self.btn_ganti = ctk.CTkButton(kartu, text="Belum punya akun? Daftar",
-                                        fg_color="transparent", text_color=BIRU,
-                                        hover_color="white", command=self._ganti_mode)
+        self.btn_ganti = ctk.CTkButton(kartu, text="Belum punya akun? Daftar", fg_color="transparent", text_color=BIRU, hover_color="white", command=self._ganti_mode)
         self.btn_ganti.pack(pady=(0, 24))
 
         self.entri_password.bind("<Return>", lambda e: self._submit())
 
     def tampilkan(self, setelah_masuk=None):
-        """Tampilkan panel menutupi seluruh jendela. `setelah_masuk` dijalankan
-        otomatis kalau login/registrasi berhasil (misalnya lanjut mulai monitoring)."""
         self._setelah_masuk = setelah_masuk
         if self._mode_daftar:
-            self._ganti_mode()   # selalu buka dalam mode "Masuk" dulu
+            self._ganti_mode()
         self.lbl_pesan.configure(text="")
         self.entri_email.delete(0, "end")
         self.entri_password.delete(0, "end")

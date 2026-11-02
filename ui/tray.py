@@ -1,7 +1,5 @@
-"""Ikon di system tray Windows."""
 import pystray
 from PIL import Image, ImageDraw
-
 
 def buat_ikon():
     gambar = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
@@ -11,10 +9,8 @@ def buat_ikon():
     g.ellipse((26, 26, 38, 38), fill="white")
     return gambar
 
-
 class Tray:
     def __init__(self, perintah):
-        """perintah: fungsi yang dipanggil dengan nama perintah (dari thread tray)."""
         menu = pystray.Menu(
             pystray.MenuItem("Buka dashboard", lambda: perintah("buka"), default=True),
             pystray.MenuItem("Mulai / hentikan monitoring", lambda: perintah("toggle")),

@@ -2,7 +2,6 @@ import ctypes
 import time
 import config
 
-
 class ScreenLocker:
     def __init__(self):
         self.aktif = False          

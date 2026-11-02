@@ -4,7 +4,6 @@ import mediapipe as mp
 MATA_KIRI = [362, 385, 387, 263, 373, 380]
 MATA_KANAN = [33, 160, 158, 133, 153, 144]
 
-
 class FaceDetector:
     def __init__(self):
         self.mesh = mp.solutions.face_mesh.FaceMesh(
