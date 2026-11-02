@@ -7,9 +7,11 @@ from core.eye_analyzer import EyeAnalyzer
 from core.distance import DistanceEstimator
 from core.screen_lock import ScreenLocker
 from core.fatigue import FatigueDetector
+from core.gaze import deteksi_arah
 from data import database
 
 MAKS_PERINGATAN = 20
+
 
 class Monitor:
     def __init__(self):
@@ -25,8 +27,8 @@ class Monitor:
         self._jalan = False
         self._minta_kalibrasi = False
         self._frame = None
-        self._peringatan = []          
-        self._peringatan_sesi = []    
+        self._peringatan = []
+        self._peringatan_sesi = []
         self._catat_terakhir = {}
         self._data = self._data_kosong()
 
@@ -37,7 +39,6 @@ class Monitor:
         self.jumlah_terlalu_dekat = 0
         self.jumlah_dikunci = 0
 
- 
     def mulai(self):
         if self._jalan:
             return True
@@ -97,12 +98,13 @@ class Monitor:
             "rasio": 0.0, "sudah_kalibrasi": False, "terlalu_dekat": False,
             "sisa_kunci": None, "kunci_aktif": False,
             "fatigue": "Mengumpulkan data...",
+            "arah_pandang": "-",
         }
 
     def _catat(self, teks):
         sekarang = time.time()
         if sekarang - self._catat_terakhir.get(teks, 0) < 10:
-            return  
+            return
         self._catat_terakhir[teks] = sekarang
         with self._gembok:
             self._peringatan.append((time.strftime("%H:%M"), teks))
@@ -129,7 +131,7 @@ class Monitor:
             print("Gagal menyimpan riwayat:", e)
 
     def _loop(self):
-        detektor = FaceDetector() 
+        detektor = FaceDetector()
         try:
             while self._jalan:
                 frame = self.kamera.ambil_frame()
@@ -151,7 +153,7 @@ class Monitor:
             self._jalan = False
             with self._gembok:
                 self._data["berjalan"] = False
-            self._simpan_sesi() 
+            self._simpan_sesi()
 
     def _tanpa_wajah(self):
         self.analisis.reset_frame()
@@ -162,11 +164,13 @@ class Monitor:
             self._data["wajah"] = False
             self._data["terlalu_dekat"] = False
             self._data["sisa_kunci"] = None
+            self._data["arah_pandang"] = "-"
             self._data["durasi"] = int(time.time() - self.waktu_mulai)
 
     def _dengan_wajah(self, frame, titik):
         self.analisis.analisis(titik, MATA_KIRI, MATA_KANAN)
         self.jarak.analisis(titik)
+        arah_pandang = deteksi_arah(titik, MATA_KIRI, MATA_KANAN)
 
         if self._minta_kalibrasi:
             self.jarak.kalibrasi(titik)
@@ -207,4 +211,5 @@ class Monitor:
                 "sisa_kunci": self.kunci.sisa,
                 "kunci_aktif": self.kunci.aktif,
                 "fatigue": status,
+                "arah_pandang": arah_pandang,
             })

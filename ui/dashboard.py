@@ -9,6 +9,8 @@ import cv2
 from PIL import Image
 
 import config
+from data import database
+from ui.panel_login import PanelLogin
 from ui.halaman_pengaturan import HalamanPengaturan
 from ui.halaman_riwayat import HalamanRiwayat
 from ui.popup import PopupPeringatan
@@ -28,6 +30,7 @@ class Dashboard(ctk.CTk):
     def __init__(self, monitor):
         super().__init__()
         self.monitor = monitor
+        self.pengguna = None   # diisi setelah login, dipicu dari Mulai monitoring/Kalibrasi
         self.title("EyeGuard")
         self.geometry("1180x820")
         self.minsize(1000, 700)
@@ -56,12 +59,13 @@ class Dashboard(ctk.CTk):
         self.isi.pack(fill="both", expand=True)
         self._buat_dashboard()
         self._buat_halaman_lain()
-        self.buka_halaman("Dashboard")
+        self.buka_halaman("Beranda")
 
         # Tombol X hanya menyembunyikan jendela, monitoring tetap jalan
         self.protocol("WM_DELETE_WINDOW", self.sembunyikan)
         self.tray = Tray(self.antrian.put)
         self.tray.mulai()
+        self.panel_login = PanelLogin(self)
         self._segarkan()
 
     # --- membangun tampilan ---
@@ -77,6 +81,12 @@ class Dashboard(ctk.CTk):
                                    command=lambda n=nama: self.buka_halaman(n))
             tombol.pack(side="left", padx=2)
             self.tombol_nav[nama] = tombol
+        self.btn_akun = ctk.CTkButton(bar, text="Masuk", width=80, height=32, corner_radius=16,
+                                      fg_color="transparent", text_color=BIRU, hover_color=BIRU_MUDA,
+                                      command=self._klik_akun)
+        self.btn_akun.pack(side="right", padx=(0, 20))
+        self.lbl_akun = ctk.CTkLabel(bar, text="", text_color=TEKS_PUDAR, font=self.f_kecil)
+        self.lbl_akun.pack(side="right", padx=(0, 12))
         ctk.CTkFrame(self, fg_color=GARIS, corner_radius=0, height=1).pack(fill="x")
 
     def _kartu_status(self, parent, kolom, judul):
@@ -89,6 +99,65 @@ class Dashboard(ctk.CTk):
         ket = ctk.CTkLabel(k, text="", font=self.f_kecil, text_color=TEKS_PUDAR)
         ket.pack(anchor="w", padx=18, pady=(0, 14))
         return nilai, ket
+
+    def _buat_beranda(self):
+        h = ctk.CTkScrollableFrame(self.isi, fg_color="transparent")
+        self.halaman["Beranda"] = h
+
+        ctk.CTkLabel(h, text="Selamat datang di EyeGuard", font=self.f_judul,
+                     text_color=TEKS).pack(anchor="w", padx=24, pady=(24, 4))
+        ctk.CTkLabel(h, text="Aplikasi pemantau kondisi mata dan jarak ke layar lewat webcam, "
+                             "berjalan di latar belakang seperti VPN.",
+                     font=self.f_kecil, text_color=TEKS_PUDAR,
+                     wraplength=700, justify="left").pack(anchor="w", padx=24, pady=(0, 16))
+
+        tombol_biru(h, "Mulai monitoring sekarang", self._mulai_dari_beranda
+                   ).pack(anchor="w", padx=24, pady=(0, 20))
+
+        baris = ctk.CTkFrame(h, fg_color="transparent")
+        baris.pack(fill="x", padx=18, pady=6)
+        for i in range(4):
+            baris.grid_columnconfigure(i, weight=1, uniform="beranda")
+        self.rb_sesi = self._kartu_ringkasan(baris, 0, "Total sesi")
+        self.rb_waktu = self._kartu_ringkasan(baris, 1, "Total waktu")
+        self.rb_kedip = self._kartu_ringkasan(baris, 2, "Rata-rata kedip")
+        self.rb_dekat = self._kartu_ringkasan(baris, 3, "Kali terlalu dekat")
+
+        ctk.CTkLabel(h, text="Fitur utama", font=self.f_tebal, text_color=TEKS
+                    ).pack(anchor="w", padx=24, pady=(24, 8))
+        for teks in (
+            "Deteksi wajah, mata, dan arah pandangan lewat webcam (MediaPipe)",
+            "Estimasi jarak ke layar dengan kalibrasi otomatis",
+            "Peringatan dan kunci layar otomatis saat terlalu dekat",
+            "Indikator fatigue dari pola kedipan",
+            "Riwayat dan statistik tiap sesi monitoring",
+        ):
+            ctk.CTkLabel(h, text=f"•  {teks}", font=self.f_kecil, text_color=TEKS_PUDAR
+                        ).pack(anchor="w", padx=36, pady=2)
+
+        ctk.CTkLabel(h, text="EyeGuard · indikator kelelahan mata, bukan diagnosis medis",
+                     font=self.f_kecil, text_color=TEKS_PUDAR).pack(pady=(24, 16))
+
+    def _kartu_ringkasan(self, parent, kolom, judul):
+        k = buat_kartu(parent)
+        k.grid(row=0, column=kolom, padx=6, sticky="nsew")
+        ctk.CTkLabel(k, text=judul, font=self.f_kecil, text_color=TEKS_PUDAR
+                    ).pack(anchor="w", padx=18, pady=(14, 0))
+        nilai = ctk.CTkLabel(k, text="-", font=self.f_besar, text_color=TEKS)
+        nilai.pack(anchor="w", padx=18, pady=(0, 14))
+        return nilai
+
+    def segarkan_beranda(self):
+        r = database.ringkasan_total()
+        self.rb_sesi.configure(text=str(r["jumlah_sesi"]))
+        self.rb_waktu.configure(text=f"{int(r['total_durasi'] // 60)} mnt")
+        self.rb_kedip.configure(text=f"{r['rata_kedip']:.0f}/mnt")
+        self.rb_dekat.configure(text=str(r["total_dekat"]))
+
+    def _mulai_dari_beranda(self):
+        self.buka_halaman("Dashboard")
+        if not self.monitor.ambil_data()["berjalan"]:
+            self._toggle_monitoring()
 
     def _buat_dashboard(self):
         h = ctk.CTkScrollableFrame(self.isi, fg_color="transparent")
@@ -201,15 +270,15 @@ class Dashboard(ctk.CTk):
                      font=self.f_kecil, text_color=TEKS_PUDAR).pack(pady=(10, 16))
 
     def _buat_halaman_lain(self):
-        """Halaman Riwayat dan Pengaturan sudah jadi. Beranda dan Premium masih placeholder."""
+        """Beranda, Riwayat, dan Pengaturan sudah jadi. Premium masih placeholder."""
+        self._buat_beranda()
         self.halaman["Riwayat"] = HalamanRiwayat(self.isi)
         self.halaman["Pengaturan"] = HalamanPengaturan(self.isi, self.monitor)
-        for nama in ("Beranda", "Premium"):
-            f = ctk.CTkFrame(self.isi, fg_color="transparent")
-            ctk.CTkLabel(f, text=nama, font=self.f_judul, text_color=TEKS).pack(pady=(90, 8))
-            ctk.CTkLabel(f, text="Halaman ini dikerjakan di tahap berikutnya.",
-                         font=self.f_kecil, text_color=TEKS_PUDAR).pack()
-            self.halaman[nama] = f
+        f = ctk.CTkFrame(self.isi, fg_color="transparent")
+        ctk.CTkLabel(f, text="Premium", font=self.f_judul, text_color=TEKS).pack(pady=(90, 8))
+        ctk.CTkLabel(f, text="Halaman ini dikerjakan di tahap berikutnya.",
+                     font=self.f_kecil, text_color=TEKS_PUDAR).pack()
+        self.halaman["Premium"] = f
 
     def buka_halaman(self, nama):
         for f in self.halaman.values():
@@ -217,6 +286,8 @@ class Dashboard(ctk.CTk):
         self.halaman[nama].pack(fill="both", expand=True)
         if nama in ("Riwayat", "Pengaturan"):
             self.halaman[nama].segarkan()   # muat ulang data dari database
+        elif nama == "Beranda":
+            self.segarkan_beranda()
         for n, tombol in self.tombol_nav.items():
             if n == nama:
                 tombol.configure(fg_color=BIRU, text_color="white", hover_color=BIRU)
@@ -224,21 +295,60 @@ class Dashboard(ctk.CTk):
                 tombol.configure(fg_color="transparent", text_color=TEKS_PUDAR,
                                  hover_color=BIRU_MUDA)
 
+    # --- akun ---
+    def _klik_akun(self):
+        if self.pengguna is None:
+            self.panel_login.tampilkan()
+        else:
+            self._logout()
+
+    def _butuh_login(self, lanjut):
+        if self.pengguna is not None:
+            lanjut()
+        else:
+            self.panel_login.tampilkan(setelah_masuk=lanjut)
+
+    def _login_berhasil(self, pengguna, lanjut):
+        self.pengguna = pengguna
+        self._perbarui_navbar_akun()
+        if lanjut is not None:
+            lanjut()
+
+    def _logout(self):
+        self.pengguna = None
+        self._perbarui_navbar_akun()
+        self._tampil_pesan("Kamu sudah keluar.", TEKS_PUDAR)
+
+    def _perbarui_navbar_akun(self):
+        if self.pengguna is None:
+            self.lbl_akun.configure(text="")
+            self.btn_akun.configure(text="Masuk", text_color=BIRU)
+        else:
+            self.lbl_akun.configure(text=f"Halo, {self.pengguna['nama'].split()[0]}")
+            self.btn_akun.configure(text="Keluar", text_color=MERAH)
+
     # --- aksi tombol ---
     def _toggle_monitoring(self):
         if self.monitor.ambil_data()["berjalan"]:
             self.monitor.berhenti()
             self.riwayat_kedip.clear()
             self._gambar_grafik()
-        elif not self.monitor.mulai():
-            self._tampil_pesan("Kamera tidak bisa dibuka. Tutup aplikasi lain yang memakai kamera.")
+            return
+        self._butuh_login(self._mulai_monitoring_sekarang)
+
+    def _mulai_monitoring_sekarang(self):
+        if not self.monitor.mulai():
+            self._tampil_pesan("Gagal memulai monitoring. Pastikan webcam tersedia.")
 
     def _kalibrasi(self):
+        self._butuh_login(self._kalibrasi_sekarang)
+
+    def _kalibrasi_sekarang(self):
         if self.monitor.ambil_data()["berjalan"]:
             self.monitor.kalibrasi()
-            self._tampil_pesan("Kalibrasi jarak diminta. Duduk normal dan hadap layar.", BIRU)
+            self._tampil_pesan("Kalibrasi jarak dimulai. Duduk normal dan hadap layar.", BIRU)
         else:
-            self._tampil_pesan("Mulai monitoring dulu, baru kalibrasi jarak.")
+            self._tampil_pesan("Mulai monitoring dulu, baru kalibrasi jarak")
 
     def _ubah_kunci(self):
         """Samakan kondisi ScreenLocker dengan posisi switch."""
@@ -343,7 +453,7 @@ class Dashboard(ctk.CTk):
             tertutup = d["tertutup"]
             self._set(self.k_mata, "Tertutup" if tertutup else "Terbuka",
                       MERAH if tertutup else HIJAU)
-            self._set(self.k_mata_ket, f"EAR {d['ear']:.2f}")
+            self._set(self.k_mata_ket, f"EAR {d['ear']:.2f} · Pandangan: {d['arah_pandang']}")
         else:
             self._set(self.k_mata, "-", TEKS)
             self._set(self.k_mata_ket, "Wajah tidak terdeteksi" if jalan else "Belum berjalan")
@@ -435,4 +545,4 @@ class Dashboard(ctk.CTk):
             titik = []
             for i, v in enumerate(nilai):
                 titik += [i * langkah, y(v)]
-            c.create_line(*titik, fill=BIRU, width=3, smooth=True)
+            c.create_line(*titik, fill=BIRU, width=3, smooth=True)

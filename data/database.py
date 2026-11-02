@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import os
+import re
 import sqlite3
 import time
 from contextlib import contextmanager
@@ -15,6 +18,7 @@ BATAS = {
 }
 
 DEFAULT = {nama: getattr(config, nama) for nama in BATAS}
+
 
 @contextmanager
 def _db():
@@ -50,6 +54,13 @@ def buat_tabel():
                 id_monitoring INTEGER REFERENCES tbl_monitoring(id),
                 waktu         TEXT,
                 pesan         TEXT
+            );
+            CREATE TABLE IF NOT EXISTS tbl_pengguna (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                nama          TEXT NOT NULL,
+                email         TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                dibuat_pada   TEXT
             );
         """)
 
@@ -145,3 +156,56 @@ def ringkasan_total():
                FROM tbl_monitoring"""
         ).fetchone()
     return dict(b)
+
+
+# --- akun pengguna ---
+def _hash_password(password, garam=None):
+    garam = garam or os.urandom(16).hex()
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), garam.encode("utf-8"), 100_000).hex()
+    return f"{garam}${digest}"
+
+
+def _cek_password(password, tersimpan):
+    try:
+        garam, _ = tersimpan.split("$", 1)
+    except ValueError:
+        return False
+    return hmac.compare_digest(_hash_password(password, garam), tersimpan)
+
+
+def validasi_registrasi(nama, email, password):
+    nama = (nama or "").strip()
+    email = (email or "").strip().lower()
+    if len(nama) < 3:
+        return False, "Nama minimal 3 karakter."
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return False, "Format email tidak valid."
+    if len(password or "") < 6:
+        return False, "Password minimal 6 karakter."
+    with _db() as k:
+        ada = k.execute("SELECT 1 FROM tbl_pengguna WHERE email = ?", (email,)).fetchone()
+    if ada:
+        return False, "Email sudah terdaftar."
+    return True, ""
+
+
+def daftar_pengguna(nama, email, password):
+    ok, pesan = validasi_registrasi(nama, email, password)
+    if not ok:
+        return False, pesan, None
+    nama, email = nama.strip(), email.strip().lower()
+    with _db() as k:
+        cur = k.execute(
+            "INSERT INTO tbl_pengguna (nama, email, password_hash, dibuat_pada) VALUES (?, ?, ?, ?)",
+            (nama, email, _hash_password(password), time.strftime("%Y-%m-%d %H:%M:%S")),
+        )
+    return True, "Registrasi berhasil.", cur.lastrowid
+
+
+def login_pengguna(email, password):
+    email = (email or "").strip().lower()
+    with _db() as k:
+        baris = k.execute("SELECT * FROM tbl_pengguna WHERE email = ?", (email,)).fetchone()
+    if baris is None or not _cek_password(password or "", baris["password_hash"]):
+        return False, "Email atau password salah.", None
+    return True, "", dict(baris)
